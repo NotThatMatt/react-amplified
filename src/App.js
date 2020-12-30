@@ -10,10 +10,18 @@ const formReducer = (state, event) => {
       filename: '',
       email: '',
       source: '',
-      'es': false,
-      'fr': false,
-      'de': false,
+      langs: [{ 'es': false}, {'fr': false}, {'de': false}]
     }
+  }
+  if(event.name==='langs'){
+    const updateLangs = [...state.langs]
+    updateLangs.splice(event.id, 1, { [event.value]: event.checked });
+
+    return {      
+      ...state,
+      langs: updateLangs
+    }
+
   }
   return {
     ...state,
@@ -44,19 +52,14 @@ const formReducer = (state, event) => {
 }
 
 function App() {
-  
-  
+   
   const [formData, setFormData] = useReducer(formReducer, {
   filename: '',
   email: '',
   source: '',
-  'es': false,
-  'fr': false,
-  'de': false});
+  langs: [{ 'es': false}, {'fr': false}, {'de': false}]});
   
   const [submitting, setSubmitting] = useState(false);
-  
-  
   
   const handleSubmit = event => {
     console.log(event)
@@ -72,21 +75,32 @@ function App() {
    }, 3000)
  
  }
+ 
  const handleChange = event => {
-  
-  const isFile = event.target.type === 'file';
-  const isCheckbox = event.target.type === 'checkbox';
-  if (isFile){
-    console.log(event.target.files[0].name)  
-    setFormData({
-      name: 'filename',
-      value: event.target.files[0].name
-    });
+  switch (event.target.type) {
+    case "file":
+      setFormData({
+        type: event.target.type,
+        name: 'filename',
+        value: event.target.files[0].name
+      })
+    break;
+    case "checkbox":
+      setFormData({
+        id: event.target.attributes.id.value,
+        type: event.target.type,
+        name: event.target.name,
+        value: event.target.value,
+        checked: event.target.checked
+      })
+    break;
+    default:
+      setFormData({
+        type: event.target.type,
+        name: event.target.name,
+        value: event.target.value
+      });
   }
-  setFormData({
-    name: event.target.name,
-    value: isCheckbox ? event.target.checked : event.target.value,
-  });
 }
   return (
     <div className="App-header">
@@ -115,9 +129,9 @@ function App() {
          </label>
          <label>
            <p>Target Language</p>
-           <input onChange={handleChange} type="checkbox" name="es" checked={formData["es"]}/> Spanish<br></br>
-           <input onChange={handleChange} type="checkbox" name="fr" checked={formData["fr"]}/> French<br></br>
-           <input onChange={handleChange} type="checkbox" name="de" checked={formData["de"]}/> German<br></br>
+           <input id="0" onChange={handleChange} type="checkbox" name="langs" value="es" /> Spanish<br></br>
+           <input id="1" onChange={handleChange} type="checkbox" name="langs" value="fr" /> French<br></br>
+           <input id="2" onChange={handleChange} type="checkbox" name="langs" value="de" /> German<br></br>
          </label>
          <label>
            <p>Email Address</p>
