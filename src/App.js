@@ -45,11 +45,12 @@ const formReducer = (state, event) => {
   
   Storage.put(formData.filename, file, {
     contentType: 'video/mp4'
-})
+  })
+  
   console.log({ requestInfo })
   const data = await API.post('mytestapi', '/hello', requestInfo)
   console.log({ data })
-}
+  }
 
 function App() {
    
@@ -62,18 +63,17 @@ function App() {
   const [submitting, setSubmitting] = useState(false);
   
   const handleSubmit = event => {
-    console.log(event)
     event.preventDefault();
     setSubmitting(true);
 
    setTimeout(() => {
-     setSubmitting(false);
+    //  setSubmitting(false);
      setFormData({
       reset: true
-    }); 
+     }); 
     submitJob(formData)
    }, 3000)
- 
+   document.getElementById("jobSubmit").reset();
  }
  
  const handleChange = event => {
@@ -106,23 +106,18 @@ function App() {
     <div className="App-header">
       <h1>Submit Translation Job</h1>
       {submitting &&
-       <div>You are submitting the following:
-       <ul>
-         {Object.entries(formData).map(([name, value]) => (
-           <li key={name}><strong>{name}</strong>:{value.toString()}</li>
-         ))}
-       </ul></div>
+       <div>You're job has been submitted successfully</div>
      }
-      <form onSubmit={handleSubmit}> 
+      <form id="jobSubmit" onSubmit={handleSubmit}> 
       <fieldset>
          <label>
            <p>File Name</p>
-           <input type="hidden" name="filename" onChange={handleChange} value={formData.filename}/>
+           <input type="hidden" name="filename" onChange={handleChange} />
            <input type="file" accept='video/mp4' name="file" onChange={handleChange} onClick={(event)=> { event.target.value = null }} />
          </label>
          <label>
            <p>Source Language</p>
-           <select name="source" onChange={handleChange} value={formData.source}>
+           <select name="source" onChange={handleChange} >
               <option value="">--Please choose an option--</option>
               <option value="en">English</option>               
            </select>
