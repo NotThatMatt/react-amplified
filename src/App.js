@@ -7,8 +7,7 @@ import './App.css';
 const formReducer = (state, event) => {
   if(event.reset) {
     return {
-      filename: '',
-      email: '',
+      mediaFile: '',
       source: '',
       langs: [{ 'es': false}, {'fr': false}, {'de': false}]
     }
@@ -32,8 +31,39 @@ const formReducer = (state, event) => {
  async function submitJob(formData) {
   const user = await Auth.currentAuthenticatedUser()
   const token = user.signInUserSession.idToken.jwtToken
+  const email = user.attributes.email
   const file = formData.file
+  const targetLanguages = []
+
+
+  // upload file
+  Storage.put(formData.mediaFile, file, {
+    contentType: 'video/mp4'
+  })
+
+  // create array of target languages
+  formData.langs.forEach(targetLangs);
+  function targetLangs(value, index, array) {
+    var isLang = JSON.parse(Object.values(value))
+    var source = formData.source 
+    var target = Object.keys(value).toString()
+
+    if (isLang===true) {
+      targetLanguages.push({
+        "sourceLanguage": source,
+        "targetLanguage": target
+      })  
+    }
+  }
+
+  // clean up form and add target languages and email
+  delete formData.file
+  delete formData.langs
+  delete formData.source
+  formData['targetLanguages'] = targetLanguages
+  formData['email'] = email
   
+  // call api
   const requestInfo = {
     headers: {
       Authorization: token
@@ -43,20 +73,15 @@ const formReducer = (state, event) => {
     }
   }
   
-  Storage.put(formData.filename, file, {
-    contentType: 'video/mp4'
-  })
-  
   console.log({ requestInfo })
-  const data = await API.post('mytestapi', '/hello', requestInfo)
+  const data = await API.post('translateapi', '/files', requestInfo)
   console.log({ data })
   }
 
 function App() {
    
   const [formData, setFormData] = useReducer(formReducer, {
-  filename: '',
-  email: '',
+  mediaFile: '',
   source: '',
   langs: [{ 'es': false}, {'fr': false}, {'de': false}]});
   
@@ -64,16 +89,12 @@ function App() {
   
   const handleSubmit = event => {
     event.preventDefault();
-    setSubmitting(true);
-
-   setTimeout(() => {
-    //  setSubmitting(false);
-     setFormData({
-      reset: true
-     }); 
+    
     submitJob(formData)
-   }, 3000)
-   document.getElementById("jobSubmit").reset();
+    setFormData({reset: true}); 
+    document.getElementById("jobSubmit").reset(); 
+    setSubmitting(true);
+   
  }
  
  const handleChange = event => {
@@ -81,8 +102,13 @@ function App() {
     case "file":
       setFormData({
         type: event.target.type,
-        name: 'filename',
+        name: 'mediaFile',
         value: event.target.files[0].name
+      })
+      setFormData({
+        type: event.target.type,
+        name: 'file',
+        value: event.target.files[0]
       })
     break;
     case "checkbox":
@@ -112,8 +138,8 @@ function App() {
       <fieldset>
          <label>
            <p>File Name</p>
-           <input type="hidden" name="filename" onChange={handleChange} />
-           <input type="file" accept='video/mp4' name="file" onChange={handleChange} onClick={(event)=> { event.target.value = null }} />
+           <input type="hidden" name="mediaFile" onChange={handleChange} />
+           <input type="file" accept='video/mp4' name="file" onChange={handleChange}  />
          </label>
          <label>
            <p>Source Language</p>
@@ -128,10 +154,6 @@ function App() {
            <input id="1" onChange={handleChange} type="checkbox" name="langs" value="fr" /> French<br></br>
            <input id="2" onChange={handleChange} type="checkbox" name="langs" value="de" /> German<br></br>
          </label>
-         <label>
-           <p>Email Address</p>
-           <input type="email" name="email" onChange={handleChange} value={formData.email}/>
-         </label>
          <p><button type="submit">Submit</button></p>
        </fieldset>       
       </form>
@@ -139,7 +161,6 @@ function App() {
     </div>
   )
 }
-
 
 export default withAuthenticator(App);
  
