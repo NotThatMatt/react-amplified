@@ -1,4 +1,4 @@
-import React, { useReducer, useState } from 'react';
+import React, { useReducer } from 'react';
 import { withAuthenticator } from '@aws-amplify/ui-react'
 import { API, Auth, Storage } from 'aws-amplify';
 import './App.css';
@@ -71,11 +71,11 @@ const formReducer = (state, event) => {
     body: {
       formData
     }
-  }
+  }  
+  await API.post('translateapi', '/files', requestInfo)
   
-  console.log({ requestInfo })
-  const data = await API.post('translateapi', '/files', requestInfo)
-  console.log({ data })
+  alert("You're job has been submitted successfully\nYou will receive an email once the job is complete");
+
   }
 
 function App() {
@@ -85,15 +85,12 @@ function App() {
   source: '',
   langs: [{ 'es': false}, {'fr': false}, {'de': false}]});
   
-  const [submitting, setSubmitting] = useState(false);
-  
   const handleSubmit = event => {
     event.preventDefault();
     
     submitJob(formData)
     setFormData({reset: true}); 
-    document.getElementById("jobSubmit").reset(); 
-    setSubmitting(true);
+    document.getElementById("jobSubmit").reset();     
    
  }
  
@@ -131,25 +128,25 @@ function App() {
   return (
     <div className="App-header">
       <h1>Submit Translation Job</h1>
-      {submitting &&
-       <div>You're job has been submitted successfully</div>
-     }
       <form id="jobSubmit" onSubmit={handleSubmit}> 
       <fieldset>
          <label>
-           <p>File Name</p>
+           <p></p>
+           <div>Source File:</div>
            <input type="hidden" name="mediaFile" onChange={handleChange} />
            <input type="file" accept='video/mp4' name="file" onChange={handleChange}  />
          </label>
          <label>
-           <p>Source Language</p>
+           <p></p>
+           <div>Source Language:</div>
            <select name="source" onChange={handleChange} >
               <option value="">--Please choose an option--</option>
               <option value="en">English</option>               
            </select>
          </label>
          <label>
-           <p>Target Language</p>
+           <p></p>
+           <div>Target Languages:</div>
            <input id="0" onChange={handleChange} type="checkbox" name="langs" value="es" /> Spanish<br></br>
            <input id="1" onChange={handleChange} type="checkbox" name="langs" value="fr" /> French<br></br>
            <input id="2" onChange={handleChange} type="checkbox" name="langs" value="de" /> German<br></br>
@@ -157,6 +154,7 @@ function App() {
          <p><button type="submit">Submit</button></p>
        </fieldset>       
       </form>
+      <br></br>
       <amplify-sign-out button-text="Log Out"></amplify-sign-out>
     </div>
   )
