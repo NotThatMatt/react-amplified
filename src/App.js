@@ -1,7 +1,9 @@
 import React, { useReducer } from 'react';
 import { withAuthenticator } from '@aws-amplify/ui-react'
-import { API, Auth, Storage } from 'aws-amplify';
+import { Auth, Storage } from 'aws-amplify';
 import './App.css';
+
+
 
 
 const formReducer = (state, event) => {
@@ -28,13 +30,15 @@ const formReducer = (state, event) => {
   }
  }
 
+ const translateAPI = 'https://qllu34ohpk.execute-api.us-east-1.amazonaws.com/dev/job'
+
  async function submitJob(formData) {
-  const user = await Auth.currentAuthenticatedUser()
+  // const user = await Auth.currentAuthenticatedUser()
+  const user = await Auth.user
   const token = user.signInUserSession.idToken.jwtToken
-  const email = user.attributes.email
+  // const email = user.attributes.email
   const file = formData.file
   const targetLanguages = []
-
 
   // upload file
   Storage.put(formData.mediaFile, file, {
@@ -61,10 +65,10 @@ const formReducer = (state, event) => {
   delete formData.langs
   delete formData.source
   formData['targetLanguages'] = targetLanguages
-  formData['email'] = email
   
   // call api
   const requestInfo = {
+    method: 'POST',
     headers: {
       Authorization: token
     },
@@ -72,9 +76,11 @@ const formReducer = (state, event) => {
       formData
     }
   }  
-  await API.post('translateapi', '/files', requestInfo)
-  
-  alert("You're job has been submitted successfully\nYou will receive an email once the job is complete");
+  fetch(translateAPI, requestInfo)
+        .then(response => response.json())
+        .then(data => console.log("data :", data));        
+
+  alert("You're job has been submitted successfully");
 
   }
 
@@ -155,10 +161,71 @@ function App() {
        </fieldset>       
       </form>
       <br></br>
+        <MyComponent />
+      <br></br>
       <amplify-sign-out button-text="Log Out"></amplify-sign-out>
     </div>
   )
 }
+
+
+class MyComponent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      error: null,
+      isLoaded: false,
+      items: []
+    };
+    this.handleClick = this.handleClick.bind(this) 
+  };
+  
+
+  handleClick(){ 
+    this.getData()
+  } 
+
+  componentDidMount() {
+    this.getData()
+  }
+
+    getData() {    
+      console.log('getData')
+      fetch(translateAPI, {
+      method: 'get',
+      headers: new Headers({
+          'Authorization': Auth.user.signInUserSession.idToken.jwtToken
+      })
+  }).then(response => response.json().then(result => {
+      this.setState({
+          isLoaded: true,
+          items: result.Items
+      })
+  }))
+}
+
+  render() {
+    const { error, isLoaded, items } = this.state;
+    if (error) {
+      return <div>Error: {error.message}</div>;
+    } else if (!isLoaded) {
+      return <div>Loading...</div>;
+    } else {
+      return (
+        <div>
+          {items.map(item => (
+            <div key={item.first_name}>
+              {item.first_name} {item.last_name}
+            </div>
+          ))}
+          <button onClick={this.handleClick}>Refresh</button>
+        </div>
+      );
+    }
+  }
+}
+
+
 
 export default withAuthenticator(App);
  
